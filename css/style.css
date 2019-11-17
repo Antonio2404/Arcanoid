@@ -1,0 +1,15 @@
+canvas {
+    display: block;
+    margin: auto;
+    border: 2px solid black;
+}
+
+.btn{
+    position: absolute;
+    z-index: 100;
+    border:none;
+    background: gray;
+    width: 200px;
+    height: 45px;
+    font-size: 30px;
+}
