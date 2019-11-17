@@ -1,15 +1,23 @@
 var canvas, ctx, w, h;
 var game = true;
-var ball, boat, block;
+var ball, boat, block, bonusBall;
 var rowHeight, row, col;
 var toLeft = true;
 var toRight = true;
 var startBall = false;
 var score = 0;
+var colorsBlock; //случайный цвет блоков
+var colorsBlockSt = ["white","white","blue","blue","red"];
+
+var bonuses;
+var bonusesChangeBoat  = 1 ;
+
 var boatSound = new Audio ("song/boat.mp3");
 var blockSound = new Audio ("song/block.mp3");
 
 var bG = new Image();
+
+
 
 var BALL = function(x,y,Vx,Vy){
     this.x = x;
@@ -25,10 +33,10 @@ var BALL = function(x,y,Vx,Vy){
 var BOAT = function (x,y){
     this.x = x;
     this.y = y;
-    //this.platWidth = pW;
 
     this.color = "gray";
     this.width = 100;
+    this.widthNormal = 100;
     this.height = 10;
     this. Vx = 6;
 }
@@ -42,6 +50,14 @@ var BLOCK = function(width, height, rows, cols){
     this.padding = 3;
     
     this.obj;
+
+}
+var BONUSBALL = function(x,y){
+    this.x = x;
+    this.y = y;
+    this.Vy = -2; 
+    this.color = "green";
+    this.r = 10;
 }
 
 init();
@@ -86,6 +102,7 @@ document.addEventListener('keyup', function (event)
 });
 
 function init() {
+    game  = true;
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
     w = canvas.width;
@@ -96,16 +113,28 @@ function init() {
     boat = new BOAT (w/2, h-20)
     boat.x -= boat.width/2;
     // width, height, rows, cols)
-    block = new BLOCK((w/10)-2,30,5,10);
+    block = new BLOCK((w/10)-2,30,6,10);
+
+    bonusBall = new BONUSBALL(null,null)
 
     //карта блоков
     block.obj = [];
+    //colorsBlock = [];
+    bonuses = [];
     for(var i=0;i<block.rows;i++){
         block.obj[i] = [];
+        //colorsBlock[i] = [];
+        bonuses[i] = [];
         for(var j=0;j<block.cols;j++){
             block.obj[i][j] = 1;
+            bonuses[i][j] = parseInt(Math.random()*3);
+            //var r = parseInt(Math.random()*255);
+            //var g = parseInt(Math.random()*255);
+            //var b = parseInt(Math.random()*255);    
+            //colorsBlock[i][j] = "rgb("+r+","+g+","+b+")";
         }
     }
+
     beginGame();
 }
 
@@ -123,7 +152,7 @@ function beginGame(){
         //начальная скорость мяча при старте
         if(startBall && ball.Vx == 0 && ball.Vy == 0){
             ball.Vx = 1;
-            ball.Vy = -3;   
+            ball.Vy = -1;   
         }
 
         //отскок мяча от правой и левой стены
@@ -146,6 +175,7 @@ function beginGame(){
         //движение мяча на платформе и после запуска
         if (toRight && ball.Vx == 0 && ball.Vy == 0 && boat.x + boat.width < w) {
             ball.x += boat.Vx;
+            
         } else {
             ball.x += ball.Vx;
             ball.y += ball.Vy;
@@ -165,6 +195,8 @@ function beginGame(){
             boat.x -= boat.Vx;
         }
 
+       // bonusBall.y -= bonusBall.Vy;
+
         // разбитие блоков
         rowHeight = block.height + block.padding;
         row = (Math.floor(ball.y/(rowHeight)));
@@ -177,9 +209,24 @@ function beginGame(){
             ball.Vy = -ball.Vy;
             blockSound.play();
             score++;
+            if(bonuses[row][col] == 1 && bonusesChangeBoat > 0){
+                bonusBall.x = ball.x;
+                bonusBall.y = ball.y;
+                bonuses[row][col] = (bonuses[row][col]) - 1;
+                boat.width = boat.width/2;
+                bonusesChangeBoat--;
+            } else if(bonuses[row][col] == 2 && bonusesChangeBoat == 0){
+                bonusBall.x = ball.x;
+                bonusBall.y = ball.y;
+                bonuses[row][col] = (bonuses[row][col]) - 1;
+                boat.width = boat.width*2;
+                bonusesChangeBoat++;
+                
         }
 
-
+        
+    }
+    
         //отрисовка мяча
         ctx.fillStyle = ball.color;
         ctx.beginPath();
@@ -193,13 +240,22 @@ function beginGame(){
         ctx.fillRect(boat.x,boat.y,boat.width,boat.height);
         ctx.closePath();
 
-        ctx.fillStyle = "green";
+        //отрисовка бонуса
+        ctx.fillStyle = bonusBall.color;
+        ctx.beginPath();
+        ctx.arc(bonusBall.x, bonusBall.y, bonusBall.r,0,2*Math.PI,true);
+        ctx.closePath();
+        ctx.fill();
+
+        //ctx.fillStyle = "green";
         ctx.strokeStyle = "black";
 
         //отрисовка блоков
         for(var i=0;i<block.rows;i++){
+            ctx.fillStyle = colorsBlockSt[i];
             for(var j=0;j<block.cols;j++){
                if(block.obj[i][j] == 1){
+                    //ctx.fillStyle = colorsBlock[i][j];
                     ctx.beginPath();
                     ctx.fillRect(j*(block.width+block.padding),i*(block.height+block.padding),block.width,block.height);
                     ctx.strokeRect(j*(block.width+block.padding),i*(block.height+block.padding),block.width,block.height);
@@ -211,7 +267,32 @@ function beginGame(){
        window.requestAnimationFrame(beginGame);
 
     } else {
-        //
+       gameover();
+    }
+
+    function gameover(){
+        var text = "Game Over";
+        var text2 = "Score: " + score;
+        ctx.clearRect(0,0,w,h);
+        background();
+        ctx.fillStyle = "white";
+        var text_length = ctx.measureText(text).width;
+        var t2_len = ctx.measureText(text2).width;
+        ctx.fillText(text,w/2-text_length/2,h/2-40);
+        ctx.fillText(text2,w/2-t2_len/2,h/2+10);
+    }
+
+    function victory(){
+        var text = "You won!";
+        var text2 = "Score: " + score;
+        ctx.clearRect(0,0,w,h);
+        background();
+        ctx.fillStyle = "white";
+        var text_length = ctx.measureText(text).width;
+        var t2_len = ctx.measureText(text2).width;
+        ctx.fillText(text,w/2-text_length/2,h/2-40);
+        ctx.fillText(text2,w/2-t2_len/2,h/2+10);
+
     }
 
     function background (){
