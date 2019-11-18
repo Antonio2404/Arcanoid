@@ -152,7 +152,7 @@ function beginGame(){
         //начальная скорость мяча при старте
         if(startBall && ball.Vx == 0 && ball.Vy == 0){
             ball.Vx = 1;
-            ball.Vy = -1;   
+            ball.Vy = -2;   
         }
 
         //отскок мяча от правой и левой стены
@@ -160,10 +160,10 @@ function beginGame(){
             ball.Vx = -ball.Vx;
         }
         // отскоко мяча от верха и платформы
-        if ((ball.y - ball.r) + ball.Vy < 0){
+        if ((ball.y - ball.r) + ball.Vy < 0){   //отскок от верхнего края
             ball.Vy = - ball.Vy;
-        } else if ((ball.y + ball.r+ball.Vy)>=(h-boat.height-5) && (ball.y+ball.r)+ball.Vy < h) {
-            if(ball.x+ball.r >= boat.x && ball.x + ball.r <=(boat.x+boat.width)) {
+        } else if ((ball.y + ball.r+ball.Vy)>=(h-boat.height) && (ball.y+ball.r)+ball.Vy < h) {
+            if((ball.x+ball.r) >= boat.x && ball.x + ball.r <=(boat.x+(boat.width+20))) {
                 ball.Vy = -ball.Vy;
                 ball.Vx = 10*(ball.x-(boat.x+boat.width/2))/boat.width;
                 boatSound.play();
@@ -210,14 +210,14 @@ function beginGame(){
             blockSound.play();
             score++;
             if(bonuses[row][col] == 1 && bonusesChangeBoat > 0){
-                bonusBall.x = ball.x;
-                bonusBall.y = ball.y;
+                // bonusBall.x = ball.x;
+                // bonusBall.y = ball.y;
                 bonuses[row][col] = (bonuses[row][col]) - 1;
                 boat.width = boat.width/2;
                 bonusesChangeBoat--;
             } else if(bonuses[row][col] == 2 && bonusesChangeBoat == 0){
-                bonusBall.x = ball.x;
-                bonusBall.y = ball.y;
+                // bonusBall.x = ball.x;
+                // bonusBall.y = ball.y;
                 bonuses[row][col] = (bonuses[row][col]) - 1;
                 boat.width = boat.width*2;
                 bonusesChangeBoat++;
